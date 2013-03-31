@@ -216,8 +216,77 @@
 		this.o = {};
 
     this.create();
+
+    this.allowOffSliderClicks();
   };
   
+  jSlider.prototype.allowOffSliderClicks = function() {
+    var p = this.inputNode.parent();
+    var self = this;
+    p.on("mousedown", function(e){
+      updateSliders ($(this), $(this).children("input"), e, 0);
+    });
+    p.on('touchstart', function(e) {
+      e.preventDefault(); //prevent click/mousedown being triggered by fast taps
+      e.stopPropagation(); //fixes both buttons sliding together when on top of each other
+
+      updateSliders ($(this), $(this).children("input"), e.originalEvent.targetTouches[0], 1);
+    });
+  };
+  
+  updateSliders = function (wrappingElement, slidingElement, e, touch) {
+    var new_min, new_max, slider_to_be_changed, cur_vals, offset, what_to_change, padding, new_prc, slider_, width_;
+    slider_ = slidingElement.slider();
+    width_ = wrappingElement.width();
+    offset = wrappingElement.offset().left;
+    padding = parseInt(wrappingElement.css("padding-left"));
+    new_prc = (e.pageX - offset - padding) / width_ * 100;
+    new_val = slider_.prcToValue(new_prc);
+    if (!slider_.settings.single) {
+      //cur_vals = slidingElement.val().split("%3B");
+      cur_vals = slidingElement.val().split(";");
+      if (new_val < (parseInt(cur_vals[0]) + parseInt(cur_vals[1])) / 2) {
+        what_to_change = "min";
+        new_min = new_val;
+        new_max = cur_vals[1];
+        slider_to_be_changed = wrappingElement.find(".jslider-pointer").first();
+      } else {
+        what_to_change = "max";
+        new_min = cur_vals[0];
+        new_max = new_val;
+        slider_to_be_changed = wrappingElement.find(".jslider-pointer-to");
+      }
+      slidingElement.slider("value", new_min, new_max);
+      slidingElement.slider("value", new_min, new_max);
+    } else {
+      slidingElement.slider("value", new_val);
+      what_to_change = "min";
+      slider_to_be_changed = wrappingElement.find(".jslider-pointer").first();
+    }
+    if (touch === 0) {
+      return slider_to_be_changed.trigger("mousedown");
+    } else if (touch === 1) {
+      wrappingElement.on('touchmove', function(f) {
+        f.preventDefault();
+        new_prc = (f.originalEvent.targetTouches[0].pageX - offset - padding) / width_ * 100;
+        new_val = slider_.prcToValue(new_prc);
+        if (what_to_change === "min") {
+          slidingElement.slider("value", new_val);
+        } else if (what_to_change === "max") {
+          slidingElement.slider("value", null, new_val);
+        }
+      });
+      return wrappingElement.on('touchend', function(f) {
+        wrappingElement.off('touchmove');
+        wrappingElement.off('touchend');
+        f.preventDefault();
+        f.stopPropagation();
+        var _x = slidingElement.slider();
+        x.settings.callback.call(x, x.getValue()); 
+      });
+    }
+  }
+
   jSlider.prototype.onstatechange = function(){
     
   };
