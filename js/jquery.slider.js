@@ -460,6 +460,11 @@
     // redraw range line
     if( this.o.pointers[0] && this.o.pointers[1] )
       this.o.value.css({ left: this.o.pointers[0].value.prc + "%", width: ( this.o.pointers[1].value.prc - this.o.pointers[0].value.prc ) + "%" });
+    else {//draw range line on single slider as well (from current to max, i.e. to the right)
+      var width_ = this.sizes.domWidth;
+      var new_px = Math.round(this.o.pointers[0].value.prc/100*width_); //changed from % to px because safari  & mobile are horrible at dealing with %
+      this.o.value.css({left: new_px + "px", width: (width_ - new_px) + "px" });
+    }
 
     this.o.labels[pointer.uid].value.html(
       this.nice(
